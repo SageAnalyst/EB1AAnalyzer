@@ -1,0 +1,8 @@
+﻿streamlit
+requests
+scikit-learn
+PyMuPDF
+python-docx
+fastapi
+uvicorn
+python-multipart
