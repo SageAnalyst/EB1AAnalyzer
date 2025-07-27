@@ -346,11 +346,12 @@ async def analyze_eb1a_file(file: UploadFile = File(...)):
             findings = apply_advanced_rule_based_check(content)
             all_findings.extend(findings)
 
-        # Analyze for letter repetition (optional)
+        # Analyze for letter repetition
         letters = extract_recommendation_letters(text)
         rep_flags = detect_repetitive_letters(letters)
 
-        return JSONResponse(content={
+        # ✅ Generate PDF Report here
+        pdf_path = generate_pdf_report({
             "rule_based_findings": all_findings,
             "repetitive_letters": [
                 {"letter_1": l1, "letter_2": l2, "similarity": score}
@@ -358,12 +359,22 @@ async def analyze_eb1a_file(file: UploadFile = File(...)):
             ]
         })
 
+        # ✅ Return JSON response
+        return JSONResponse(content={
+            "rule_based_findings": all_findings,
+            "repetitive_letters": [
+                {"letter_1": l1, "letter_2": l2, "similarity": score}
+                for l1, l2, score in rep_flags
+            ],
+            "pdf_report_path": pdf_path
+        })
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
-
-
 #Entry Point
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
+
 
