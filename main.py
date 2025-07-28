@@ -44,13 +44,20 @@ def download_report():
         return FileResponse(path=report_path, filename="EB1A_Risk_Report.pdf", media_type="application/pdf")
     return {"error": "Report not found."}
 
-petition_folder = "/Users/clean/RFERadar/testing_documents"
-recommendation_folder = "/Users/clean/RFERadar/recommendation_letters"
-training_json_path = "/Users/clean/RFERadar/training_data.json"
+import os
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+petition_folder = os.path.join(base_dir, "testing_documents")
+recommendation_folder = os.path.join(base_dir, "recommendation_letters")
+training_json_path = os.path.join(base_dir, "training_data.json")
+
 
 from fastapi.staticfiles import StaticFiles
 app.mount("/reports", StaticFiles(directory="reports"), name="reports")
 
+
+ 
 
 #File Utilities
 def extract_text_from_pdf(pdf_path):
