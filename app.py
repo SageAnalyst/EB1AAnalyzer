@@ -11,12 +11,12 @@ uploaded_file = st.file_uploader("📄 Choose your petition file", type=["pdf", 
 if uploaded_file is not None:
     st.info(f"Analyzing: {uploaded_file.name}")
 
-    API_URL = "https://eb1aanalyzer-1.onrender.com/analyze"
+    API_URL = "https://eb1aanalyzer-1.onrender.com/analyze/"
 
-    response = requests.post(
-        API_URL,
-        files={"file": uploaded_file}
-    )
+    uploaded_file.seek(0)  # rewind 
+    files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+    response = requests.post(API_URL, files=files, timeout=60)
+
 
     if response.status_code == 200:
         response_data = response.json()
