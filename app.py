@@ -12,10 +12,16 @@ if uploaded_file is not None:
     API_URL = "https://eb1aanalyzer-1.onrender.com/analyze/"
     uploaded_file.seek(0)
 
+    try:
+        requests.get(API_URL, timeout=10)
+    except Exception as e:
+        st.warning(f"Backend may be waking up: {e}")
+
+
     with st.spinner("Processing your document..."):
         try:
             files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
-            response = requests.post(API_URL, files=files, timeout=60)
+            response = requests.post(API_URL, files=files, timeout=120)
         except Exception as e:
             st.error(f"❌ Failed to connect to API: {e}")
             st.stop()
