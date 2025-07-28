@@ -44,13 +44,15 @@ def download_report():
         return FileResponse(path=report_path, filename="EB1A_Risk_Report.pdf", media_type="application/pdf")
     return {"error": "Report not found."}
 
-import os
+
+
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 petition_folder = os.path.join(base_dir, "testing_documents")
 recommendation_folder = os.path.join(base_dir, "recommendation_letters")
 training_json_path = os.path.join(base_dir, "training_data.json")
+
 
 
 from fastapi.staticfiles import StaticFiles
@@ -303,7 +305,9 @@ for filename, text in all_texts:
                 print(f"⚠️ Issues: {result['issues']}")
 
 #ML Model Training
-with open("/Users/clean/RFERadar/training_data.json", "r") as f:
+training_json_path = os.path.join(base_dir, "training_data.json")
+
+with open(training_json_path, "r") as f:
     data = [json.loads(line) for line in f]
     x = [entry["excerpt"] for entry in data]
     y = [1 if entry["issue_flag"] == "Strong Evidence" else 0 for entry in data]
