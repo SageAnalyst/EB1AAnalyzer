@@ -1,8 +1,6 @@
 import streamlit as st
 import requests
 
-
-
 st.set_page_config(page_title="EB1A RFE Risk Analyzer", layout="wide")
 st.title("📄 EB1A RFE Risk Analyzer")
 
@@ -10,13 +8,17 @@ uploaded_file = st.file_uploader("📄 Choose your petition file", type=["pdf", 
 
 if uploaded_file is not None:
     st.info(f"Analyzing: {uploaded_file.name}")
-
+    
     API_URL = "https://eb1aanalyzer-1.onrender.com/analyze/"
+    uploaded_file.seek(0)
 
-    uploaded_file.seek(0)  # rewind 
-    files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
-    response = requests.post(API_URL, files=files, timeout=60)
-
+    with st.spinner("Processing your document..."):
+        try:
+            files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+            response = requests.post(API_URL, files=files, timeout=60)
+        except Exception as e:
+            st.error(f"❌ Failed to connect to API: {e}")
+            st.stop()
 
     if response.status_code == 200:
         response_data = response.json()
@@ -46,12 +48,9 @@ if uploaded_file is not None:
         else:
             st.success("✅ No significant repetition detected in letters.")
 
-        # Download PDF Report if available
         if pdf_report_path:
             RENDER_BASE_URL = "https://eb1aanalyzer-1.onrender.com"
             full_pdf_url = f"{RENDER_BASE_URL}/{pdf_report_path.lstrip('/')}"
-
-            # Sanitize path
             try:
                 pdf_response = requests.get(full_pdf_url)
                 if pdf_response.status_code == 200:
@@ -73,14 +72,3 @@ if uploaded_file is not None:
             st.json(response.json())
         except Exception:
             st.error("No JSON response received from backend.")
-with st.spinner("Processing file..."):
-    response = requests.post(
-        API_URL,
-        files={"file": uploaded_file},
-        timeout=60
-    )
-response = requests.post(
-    API_URL,
-    files={"file": uploaded_file},
-    timeout=60
-)
