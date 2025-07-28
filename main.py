@@ -10,6 +10,7 @@ import uvicorn
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
@@ -17,14 +18,39 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.utils import resample
 from sklearn.metrics.pairwise import cosine_similarity
+from report_generator import generate_pdf_report
+from fastapi.staticfiles import StaticFiles
+
 
 
 app = FastAPI()
 
+# Mount the "reports" folder to serve static files (like the PDF)
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+
+# Import your routes or define them here
+from fastapi.responses import FileResponse
+
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+
+@app.get("/")
+async def root():
+    return {"message": "Hello, FastAPI"}
+
+@app.get("/download-report")
+def download_report():
+    report_path = "reports/eb1a_risk_report.pdf"
+    if os.path.exists(report_path):
+        return FileResponse(path=report_path, filename="EB1A_Risk_Report.pdf", media_type="application/pdf")
+    return {"error": "Report not found."}
 
 petition_folder = "/Users/clean/RFERadar/testing_documents"
 recommendation_folder = "/Users/clean/RFERadar/recommendation_letters"
 training_json_path = "/Users/clean/RFERadar/training_data.json"
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+
 
 #File Utilities
 def extract_text_from_pdf(pdf_path):
@@ -324,7 +350,6 @@ rep_flags = detect_repetitive_letters(letters)
 for l1, l2, score in rep_flags:
     print(f"⚠️ Repetition Detected: {l1} ↔ {l2} | Similarity: {score:.2f}")
 
-#API Endpoint
 @app.post("/analyze/")
 async def analyze_eb1a_file(file: UploadFile = File(...)):
     try:
@@ -346,11 +371,10 @@ async def analyze_eb1a_file(file: UploadFile = File(...)):
             findings = apply_advanced_rule_based_check(content)
             all_findings.extend(findings)
 
-        # Analyze for letter repetition
         letters = extract_recommendation_letters(text)
         rep_flags = detect_repetitive_letters(letters)
 
-        # ✅ Generate PDF Report here
+        # ✅ Generate the PDF report
         pdf_path = generate_pdf_report({
             "rule_based_findings": all_findings,
             "repetitive_letters": [
@@ -359,18 +383,30 @@ async def analyze_eb1a_file(file: UploadFile = File(...)):
             ]
         })
 
-        # ✅ Return JSON response
+        print("✅ PDF saved at:", pdf_path)
+
+        relative_pdf_path = os.path.join("reports", os.path.basename(pdf_path))
+
         return JSONResponse(content={
             "rule_based_findings": all_findings,
             "repetitive_letters": [
                 {"letter_1": l1, "letter_2": l2, "similarity": score}
                 for l1, l2, score in rep_flags
             ],
-            "pdf_report_path": pdf_path
+            "pdf_report_path": relative_pdf_path
         })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
+# ✅ GET endpoint for PDF file
+@app.get("/reports/{filename}")
+def get_pdf(filename: str):
+    file_path = os.path.join(os.getcwd(), "reports", filename)
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, media_type="application/pdf", filename=filename)
+    raise HTTPException(status_code=404, detail="Report not found")
+
 #Entry Point
 
 if __name__ == "__main__":

@@ -73,13 +73,18 @@ if uploaded_file is not None:
 
                 # ✅ PDF Download Button
                 if pdf_path and os.path.exists(pdf_path):
-                    with open(pdf_path, "rb") as f:
-                        st.download_button(
-                            label="📥 Download Risk Report (PDF)",
-                            data=f,
-                            file_name=f"{custom_filename.strip().replace(' ', '_')}.pdf",
-                            mime="application/pdf"
-                        )
+                    full_pdf_path = os.path.join("reports", os.path.basename(pdf_path))
+    
+                    if os.path.exists(full_pdf_path):
+                        with open(full_pdf_path, "rb") as f:
+                            st.download_button(
+                                label="📥 Download Risk Report (PDF)",
+                                data=f,
+                                file_name=f"{custom_filename.strip().replace(' ', '_')}.pdf",
+                                mime="application/pdf")
+                    else:
+                        st.warning("⚠️ PDF file not found on the server.")
+
 
             else:
                 st.error(f"❌ Server Error: {status}")
